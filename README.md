@@ -756,3 +756,439 @@ HTTP Status	Meaning	Example
                       │
                       ▼
             DELETE /api/students/{id}
+
+---
+
+## ⚠️ Error Handling
+
+The application uses centralized exception handling through `@RestControllerAdvice`.
+
+All API errors are returned in a consistent JSON format.
+
+### 1. Student Not Found — 404
+
+Occurs when a requested student ID does not exist.
+
+**Example Request**
+
+```http
+GET /api/students/999
+
+Response
+
+{
+  "timestamp": "2026-08-09T06:21:45.3065418",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Student with ID 999 not found"
+}
+2. Duplicate Email — 409
+
+Occurs when attempting to create or update a student using an email address that already exists.
+
+Example Request
+
+POST /api/students
+
+Response
+
+{
+  "timestamp": "2026-08-09T06:18:36.8196042",
+  "status": 409,
+  "error": "Conflict",
+  "message": "Email already exists"
+}
+3. Validation Error — 400
+
+Occurs when the request contains invalid data.
+
+Invalid Email
+{
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "errors": {
+    "email": "Enter a valid email"
+  },
+  "timestamp": "2026-08-09T06:25:53.1074967",
+  "status": 400
+}
+Invalid Phone Number
+{
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "errors": {
+    "phone": "Phone number must contain exactly 10 digits"
+  },
+  "timestamp": "2026-08-09T06:26:45.4266117",
+  "status": 400
+}
+4. Invalid Pagination or Sorting — 400
+
+The API validates pagination and sorting parameters.
+
+Examples of invalid requests:
+
+GET /api/students?page=-1
+GET /api/students?size=0
+GET /api/students?size=101
+GET /api/students?sortBy=invalidField
+GET /api/students?direction=random
+
+The API returns HTTP 400 Bad Request with an explanatory error message.
+
+5. Internal Server Error — 500
+
+Unexpected application errors are handled centrally and return:
+
+{
+  "timestamp": "2026-08-09T00:00:00",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "An unexpected error occurred"
+}
+🔐 Validation Rules
+
+The following validation rules are applied when creating or updating a student:
+
+Field	Validation
+name	Cannot be blank
+email	Cannot be blank and must be a valid email
+department	Cannot be blank
+year	Must be between 1 and 4
+phone	Must contain exactly 10 digits
+Example Valid Request
+{
+  "name": "Subrata Mallick",
+  "email": "subrata2@gmail.com",
+  "department": "ECE",
+  "year": 4,
+  "phone": "9123456789"
+}
+📄 Pagination
+
+The API supports pagination through query parameters.
+
+Parameters
+Parameter	Default	Description
+page	0	Zero-based page number
+size	5	Number of records per page
+sortBy	id	Field used for sorting
+direction	asc	Sorting direction
+Example
+GET /api/students?page=0&size=5&sortBy=name&direction=asc
+Example Response
+{
+  "content": [
+    {
+      "id": 4,
+      "name": "Subrata Mallick",
+      "email": "subrata2@gmail.com",
+      "department": "ECE",
+      "year": 4,
+      "phone": "9123456789"
+    },
+    {
+      "id": 11,
+      "name": "Rahul Kumar",
+      "email": "rahul@example.com",
+      "department": "CSE",
+      "year": 4,
+      "phone": "9123456789"
+    }
+  ],
+  "page": 0,
+  "size": 5,
+  "totalElements": 2,
+  "totalPages": 1
+}
+🔎 Search
+Search by Name
+GET /api/students/search/name?name=Subrata
+
+Returns students whose names contain the supplied text.
+
+The search is case-insensitive.
+
+Search by Department
+GET /api/students/search/department?department=ECE
+
+Returns students belonging to the specified department.
+
+The search is case-insensitive.
+
+Combined Search
+GET /api/students/search?name=Subrata&department=ECE&page=0&size=5&sortBy=id&direction=asc
+
+The combined search supports:
+
+Name filtering
+Department filtering
+Pagination
+Sorting
+Sort direction
+📚 API Documentation
+
+Swagger/OpenAPI documentation is available when the application is running.
+
+Swagger UI
+http://localhost:8080/swagger-ui/index.html
+OpenAPI Specification
+http://localhost:8080/v3/api-docs
+
+Swagger provides an interactive interface for:
+
+Viewing available endpoints
+Understanding request parameters
+Viewing request/response schemas
+Executing API requests
+Testing validation and error responses
+🗄️ Database Configuration
+
+The application uses MySQL as the primary database.
+
+Database configuration is supplied through environment variables.
+
+Environment Variables
+DB_URL
+DB_USERNAME
+DB_PASSWORD
+
+Example:
+
+DB_URL=jdbc:mysql://localhost:3306/student_management
+DB_USERNAME=root
+DB_PASSWORD=your_password
+
+Database credentials should never be committed to GitHub.
+
+The .gitignore file excludes local environment and configuration files containing secrets.
+
+🧪 Testing
+
+The project contains automated tests for the major application layers.
+
+Test Coverage Includes
+Application context loading
+Student service operations
+Student creation
+Student retrieval
+Student update
+Student deletion
+Duplicate email handling
+Student-not-found handling
+Validation handling
+Pagination
+Sorting
+Search operations
+Repository operations
+Controller endpoints
+
+The project uses:
+
+JUnit
+Mockito
+Spring Boot Test
+Spring MockMvc
+H2 in-memory database
+Run Tests
+
+Windows:
+
+.\gradlew test
+
+Linux/macOS:
+
+./gradlew test
+
+Expected result:
+
+BUILD SUCCESSFUL
+
+student-management/
+│
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/subrata/studentmanagement/
+│   │   │       │
+│   │   │       ├── config/
+│   │   │       │   ├── CorsConfig.java
+│   │   │       │   ├── OpenAPIConfig.java
+│   │   │       │   └── WebConfig.java
+│   │   │       │
+│   │   │       ├── controller/
+│   │   │       │   └── StudentController.java
+│   │   │       │
+│   │   │       ├── dto/
+│   │   │       │   ├── PageResponseDTO.java
+│   │   │       │   ├── StudentRequestDTO.java
+│   │   │       │   └── StudentResponseDTO.java
+│   │   │       │
+│   │   │       ├── entity/
+│   │   │       │   └── Student.java
+│   │   │       │
+│   │   │       ├── exception/
+│   │   │       │   ├── EmailAlreadyExistsException.java
+│   │   │       │   ├── ErrorResponse.java
+│   │   │       │   ├── GlobalExceptionHandler.java
+│   │   │       │   ├── InvalidPaginationException.java
+│   │   │       │   └── StudentNotFoundException.java
+│   │   │       │
+│   │   │       ├── repository/
+│   │   │       │   └── StudentRepository.java
+│   │   │       │
+│   │   │       ├── service/
+│   │   │       │   ├── StudentService.java
+│   │   │       │   └── StudentServiceImpl.java
+│   │   │       │
+│   │   │       └── StudentManagementApplication.java
+│   │   │
+│   │   └── resources/
+│   │       └── application.properties
+│   │
+│   └── test/
+│       ├── java/
+│       │   └── com/subrata/studentmanagement/
+│       │       ├── controller/
+│       │       ├── repository/
+│       │       ├── service/
+│       │       └── StudentManagementApplicationTests.java
+│       │
+│       └── resources/
+│           ├── application.properties
+│           └── application-test.properties
+│
+├── gradle/
+├── postman/
+├── build.gradle
+├── settings.gradle
+├── gradlew
+├── gradlew.bat
+├── .gitignore
+└── README.md
+
+Client
+   │
+   │ HTTP Request
+   ▼
+StudentController
+   │
+   │ Validated Request DTO
+   ▼
+StudentService
+   │
+   │ Business Logic
+   ▼
+StudentRepository
+   │
+   │ JPA / Hibernate
+   ▼
+MySQL Database
+   │
+   │ Student Data
+   ▼
+StudentRepository
+   │
+   ▼
+StudentService
+   │
+   │ Response DTO
+   ▼
+StudentController
+   │
+   │ JSON Response
+   ▼
+Client
+
+🧩 Design Highlights
+Layered Architecture
+
+The application separates responsibilities into:
+
+Controller layer
+Service layer
+Repository layer
+Entity layer
+DTO layer
+Exception handling layer
+Configuration layer
+DTO Pattern
+
+Separate request and response DTOs are used instead of exposing the JPA entity directly through the REST API.
+
+Centralized Exception Handling
+
+GlobalExceptionHandler provides consistent error responses across the application.
+
+Database Safety
+
+Database credentials are provided using environment variables instead of hard-coded credentials.
+
+Validation
+
+Jakarta Bean Validation prevents invalid student data from reaching the service layer.
+
+Pagination and Sorting
+
+Spring Data's Pageable and Sort APIs are used for efficient database-level pagination and sorting.
+
+🚀 Running the Application
+1. Clone the Repository
+git clone https://github.com/MallickSayan407/student-management.git
+cd student-management
+2. Configure MySQL
+
+Create the database:
+
+CREATE DATABASE student_management;
+
+Set the required environment variables:
+
+DB_URL=jdbc:mysql://localhost:3306/student_management
+DB_USERNAME=root
+DB_PASSWORD=your_password
+3. Run the Application
+
+Windows:
+
+.\gradlew bootRun
+
+Linux/macOS:
+
+./gradlew bootRun
+
+The application starts on:
+
+http://localhost:8080
+4. Open Swagger
+http://localhost:8080/swagger-ui/index.html
+📌 Future Improvements
+
+Possible future enhancements include:
+
+Authentication and authorization using Spring Security
+JWT-based authentication
+Role-based access control
+Docker containerization
+Docker Compose for MySQL and the application
+CI/CD using GitHub Actions
+API response caching
+Advanced filtering
+Database migration using Flyway or Liquibase
+Production deployment to AWS/Azure/GCP
+Frontend using React or Angular
+Monitoring and application metrics
+👨‍💻 Author
+
+Subrata Mallick
+
+B.Tech — Electronics & Communication Engineering
+
+Interested in:
+
+Backend Development
+Java & Spring Boot
+REST API Development
+Database Systems
+IoT
+Cloud Computing
